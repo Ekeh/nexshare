@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Lean production container image (apps/web/Dockerfile) — bundles only
+  // the traced dependency subset into .next/standalone instead of shipping
+  // the whole node_modules tree.
+  output: "standalone",
   // The app never uses next/image (every image is a plain <img> — see
   // no-img-element lint warnings), so Next's built-in Image Optimization
   // API route is dead weight we get zero benefit from. Disabling it closes
