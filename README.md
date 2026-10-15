@@ -292,8 +292,17 @@ adapter class, not touching the verification logic. Wired providers:
 **Resend** for email, **Termii** for SMS (`RESEND_API_KEY`/`TERMII_API_KEY`
 in `.env`). Leave either unset and that channel's code is logged to the API
 console instead of actually sent — registration still works end-to-end
-without either account, just check the terminal running `uvicorn` for the
-code.
+without either account.
+
+**TEST MODE banner.** While a channel's provider key is unset,
+`/auth/register`, `/auth/verify/start`, and `/auth/verify/resend` also
+return that channel's code directly in the response (`email_test_code` /
+`phone_test_code` / `test_code`), and the verification screen shows it in
+a labeled amber "TEST MODE" banner — no need to go check the `uvicorn`
+terminal. This is self-disabling: set a real `RESEND_API_KEY` /
+`TERMII_API_KEY` (in `.env` locally, or in Coolify for production) and
+redeploy, and the corresponding field comes back `null` — the banner and
+code disappear on their own, no code change required.
 
 Accounts that existed before this feature (including the seeded demo
 accounts) were grandfathered as verified by the migration that added it —
