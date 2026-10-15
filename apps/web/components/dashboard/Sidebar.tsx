@@ -15,7 +15,7 @@ import {
   LifeBuoyIcon,
 } from "@/components/icons";
 
-const links = [
+export const promoterNavLinks = [
   { label: "Dashboard", href: "/dashboard", icon: DashboardIcon },
   { label: "My Offers", href: "/dashboard/offers", icon: TagIcon },
   { label: "My Links", href: "/dashboard/links", icon: LinkIcon },
@@ -36,7 +36,7 @@ export function Sidebar() {
         <Logo tagline={false} />
       </div>
       <nav className="mt-8 flex flex-1 flex-col gap-1">
-        {links.map((link) => {
+        {promoterNavLinks.map((link) => {
           const active = pathname === link.href;
           return (
             <Link

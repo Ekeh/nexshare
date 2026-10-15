@@ -2,9 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { api, type Account } from "@/lib/api";
-import { BellIcon, LogOutIcon, SearchIcon } from "@/components/icons";
+import { LogoMark } from "@/components/Logo";
+import { BellIcon, LogOutIcon, MenuIcon, SearchIcon } from "@/components/icons";
 
-export function Topbar({ account }: { account: Account }) {
+export function Topbar({ account, onMenuClick }: { account: Account; onMenuClick: () => void }) {
   const router = useRouter();
 
   async function handleLogout() {
@@ -16,6 +17,15 @@ export function Topbar({ account }: { account: Account }) {
 
   return (
     <header className="flex items-center gap-4 border-b border-navy-900/5 bg-white px-6 py-4">
+      <button
+        type="button"
+        onClick={onMenuClick}
+        aria-label="Open menu"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-navy-700 transition hover:bg-slate-50 lg:hidden"
+      >
+        <MenuIcon className="h-5 w-5" />
+      </button>
+      <LogoMark className="h-8 w-8 shrink-0 lg:hidden" />
       <div className="relative flex-1 max-w-md">
         <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-navy-300" />
         <input
