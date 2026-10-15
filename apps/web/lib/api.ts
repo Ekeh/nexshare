@@ -160,12 +160,20 @@ export interface PendingVerification {
   email_verified: boolean;
   phone_verified: boolean;
   pending_verification_token: string;
+  // Only set while the real provider for that channel isn't configured yet
+  // (RESEND_API_KEY / TERMII_API_KEY unset on the API) — see VerificationStep.
+  email_test_code: string | null;
+  phone_test_code: string | null;
 }
 
 export interface VerifyResult {
   channel: VerificationChannel;
   fully_verified: boolean;
   account: Account | null;
+}
+
+export interface ResendResult {
+  test_code: string | null;
 }
 
 export type CommissionStatus = "pending" | "approved" | "available" | "paid" | "rejected" | "reversed";
@@ -239,7 +247,7 @@ export const api = {
       body: JSON.stringify({ channel, code }),
     }),
   resendCode: (pendingToken: string, channel: VerificationChannel) =>
-    request<void>("/auth/verify/resend", {
+    request<ResendResult>("/auth/verify/resend", {
       method: "POST",
       headers: { Authorization: `Bearer ${pendingToken}` },
       body: JSON.stringify({ channel }),
