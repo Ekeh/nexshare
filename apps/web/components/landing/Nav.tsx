@@ -1,5 +1,10 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
+import { MenuIcon } from "@/components/icons";
+import { MobileNavDrawer } from "@/components/MobileNavDrawer";
 
 const links = [
   { label: "Home", href: "#" },
@@ -11,6 +16,8 @@ const links = [
 ];
 
 export function Nav() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   return (
     <header className="relative z-20">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-10">
@@ -39,8 +46,40 @@ export function Nav() {
           >
             Get Started
           </Link>
+          <button
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open menu"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/10 lg:hidden"
+          >
+            <MenuIcon className="h-5 w-5" />
+          </button>
         </div>
       </div>
+      <MobileNavDrawer
+        open={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        links={links}
+        hideFrom="lg"
+        footer={
+          <>
+            <Link
+              href="/login"
+              onClick={() => setMobileOpen(false)}
+              className="rounded-full border border-white/30 px-5 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-white/10"
+            >
+              Login
+            </Link>
+            <Link
+              href="/register"
+              onClick={() => setMobileOpen(false)}
+              className="rounded-full bg-cta-gradient px-5 py-2.5 text-center text-sm font-bold text-navy-900 shadow-card transition hover:brightness-105"
+            >
+              Get Started
+            </Link>
+          </>
+        }
+      />
     </header>
   );
 }

@@ -22,11 +22,17 @@ export function MobileNavDrawer({
    * resize (e.g. the drawer was left open on mobile, then the viewport
    * was widened past the point where the desktop nav is shown instead). */
   hideFrom = "lg",
+  /** Extra content rendered below the link list — e.g. the public header's
+   * Login/Get Started buttons, which want their own visual treatment
+   * instead of being flattened into plain nav pills. Caller is responsible
+   * for closing the drawer on click (it already has `onClose` in scope). */
+  footer,
 }: {
   open: boolean;
   onClose: () => void;
   links: MobileNavLink[];
   hideFrom?: "md" | "lg";
+  footer?: React.ReactNode;
 }) {
   const pathname = usePathname();
 
@@ -65,7 +71,7 @@ export function MobileNavDrawer({
             const active = pathname === link.href;
             return (
               <Link
-                key={link.href}
+                key={link.label}
                 href={link.href}
                 onClick={onClose}
                 className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
@@ -80,6 +86,7 @@ export function MobileNavDrawer({
             );
           })}
         </nav>
+        {footer && <div className="mt-4 flex flex-col gap-3">{footer}</div>}
       </div>
     </div>
   );
