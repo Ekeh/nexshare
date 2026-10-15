@@ -54,7 +54,7 @@ This one needs a **build argument**, not a runtime env var:
 
 | Build Arg | Set to |
 |---|---|
-| `API_URL` | the API resource's address from step 2 (its Coolify-internal service address if they're meant to talk over the internal network, or its public domain if not — either works, but prefer internal) |
+| `API_URL` | the API resource's **public domain** (e.g. `https://api.yourdomain.com`) — see below for why, not its Coolify-internal address |
 
 This is not a mistake to skip past: Next.js evaluates `next.config.js`'s
 `rewrites()` (which reads `API_URL`) once, at `next build` — a
@@ -64,6 +64,20 @@ runtime/environment-variable override set after the image is built has
 was supplied as a build arg instead. If you ever need to point this app at
 a different API address, that requires a rebuild, not just a redeploy with
 a changed env var.
+
+**Use the API's public domain, not its internal Coolify hostname.** This
+was tried and broke in production: Coolify's internal hostname for a
+resource is timestamped per-deploy (e.g.
+`8mpnw1cdnxh9wxijmquxwqg5-20261010T134151`), not a stable service alias —
+confirmed via `docker inspect` showing no alias besides the timestamped
+one. Baking that into the web image's `API_URL` build arg means **every
+subsequent redeploy of the API resource breaks the web app's proxy**
+(`getaddrinfo EAI_AGAIN <old-timestamped-hostname>` in the web container's
+logs) until the web resource is manually rebuilt with the new hostname.
+The API's public domain doesn't change across deploys, so it isn't
+exposed to this — the small extra hop over the public network instead of
+Coolify's internal network is a worthwhile trade for not breaking on every
+API deploy.
 
 Set a public domain for this resource too (e.g. `app.yourdomain.com`) —
 that's the URL you'll actually share with users, and what you should feed
