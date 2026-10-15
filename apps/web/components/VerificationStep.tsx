@@ -12,6 +12,8 @@ export function VerificationStep({
   phone,
   emailVerified = false,
   phoneVerified = false,
+  emailTestCode = null,
+  phoneTestCode = null,
   onVerified,
 }: {
   pendingToken: string;
@@ -23,11 +25,22 @@ export function VerificationStep({
    * would otherwise sit there accepting a code that doesn't exist. */
   emailVerified?: boolean;
   phoneVerified?: boolean;
+  /** Set only while the real email/SMS provider isn't configured yet
+   * (RESEND_API_KEY / TERMII_API_KEY unset) — shows the actual code
+   * instead of making the user dig through server logs. */
+  emailTestCode?: string | null;
+  phoneTestCode?: string | null;
   onVerified: (account: Account) => void;
 }) {
   const bothPending = !emailVerified && !phoneVerified;
   return (
     <div className="flex flex-col gap-5">
+      {(emailTestCode || phoneTestCode) && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-center text-xs font-semibold text-amber-800">
+          TEST MODE — AWS SES and Termii SMS aren&rsquo;t connected yet, so your
+          verification codes are shown below instead of being emailed or texted.
+        </div>
+      )}
       <p className="text-center text-sm text-navy-400">
         {bothPending
           ? "We sent a 6-digit code to your email and phone. Enter both to finish setting up your account."
@@ -38,6 +51,7 @@ export function VerificationStep({
         destination={email}
         pendingToken={pendingToken}
         initiallyVerified={emailVerified}
+        initialTestCode={emailTestCode}
         onVerified={onVerified}
       />
       <ChannelVerifier
@@ -45,6 +59,7 @@ export function VerificationStep({
         destination={phone}
         pendingToken={pendingToken}
         initiallyVerified={phoneVerified}
+        initialTestCode={phoneTestCode}
         onVerified={onVerified}
       />
     </div>
@@ -56,12 +71,14 @@ function ChannelVerifier({
   destination,
   pendingToken,
   initiallyVerified,
+  initialTestCode,
   onVerified,
 }: {
   channel: VerificationChannel;
   destination: string;
   pendingToken: string;
   initiallyVerified: boolean;
+  initialTestCode: string | null;
   onVerified: (account: Account) => void;
 }) {
   const [code, setCode] = useState("");
@@ -70,6 +87,7 @@ function ChannelVerifier({
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_SECONDS);
+  const [testCode, setTestCode] = useState(initialTestCode);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -97,7 +115,8 @@ function ChannelVerifier({
     setResending(true);
     setCooldown(RESEND_COOLDOWN_SECONDS);
     try {
-      await api.resendCode(pendingToken, channel);
+      const result = await api.resendCode(pendingToken, channel);
+      setTestCode(result.test_code);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Couldn't resend the code.");
     } finally {
@@ -120,6 +139,11 @@ function ChannelVerifier({
         {channel === "email" ? "Email code" : "Phone code"}
       </p>
       <p className="mt-0.5 text-xs text-navy-300">Sent to {destination}</p>
+      {testCode && (
+        <p className="mt-1.5 text-xs font-semibold text-amber-700">
+          Your code: <span className="font-mono text-sm tracking-widest">{testCode}</span>
+        </p>
+      )}
       <div className="mt-2 flex gap-2">
         <input
           value={code}

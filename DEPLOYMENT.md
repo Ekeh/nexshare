@@ -72,9 +72,11 @@ back into the API resource's `CORS_ORIGINS` / `PUBLIC_BASE_URL` in step 2.
 ## 4. First login after deploy
 
 Without `RESEND_API_KEY`/`TERMII_API_KEY` set, verification codes aren't
-emailed or texted — they're printed to the **API resource's** logs
-(Coolify's dashboard has a log viewer per resource). Register an account,
-then check those logs for the six-digit codes, same as local dev.
+emailed or texted. The verification screen shows them directly instead, in
+a labeled amber "TEST MODE" banner — no need to dig through the API
+resource's Coolify logs. This is self-disabling: once both keys are set on
+the API resource and it redeploys, the banner and codes stop appearing on
+their own.
 
 ## Verified locally before this was written
 

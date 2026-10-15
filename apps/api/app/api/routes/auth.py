@@ -56,6 +56,12 @@ class PendingVerificationOut(BaseModel):
     email_verified: bool
     phone_verified: bool
     pending_verification_token: str
+    # Only populated while the real provider for that channel isn't
+    # configured (RESEND_API_KEY / TERMII_API_KEY unset) — see
+    # generate_and_send_code's callers below. Lets a tester (or anyone,
+    # before those providers go live) finish verifying without log access.
+    email_test_code: str | None = None
+    phone_test_code: str | None = None
 
 
 class VerifyRequest(BaseModel):
@@ -71,6 +77,10 @@ class VerifyOut(BaseModel):
     channel: str
     fully_verified: bool
     account: AccountOut | None = None
+
+
+class ResendOut(BaseModel):
+    test_code: str | None = None
 
 
 def _issue_token_response(response: Response, account: Account) -> AccountOut:
@@ -101,7 +111,12 @@ def _is_fully_verified(account: Account) -> bool:
     return account.email_verified_at is not None and account.phone_verified_at is not None
 
 
-def _pending_verification_out(account: Account) -> PendingVerificationOut:
+def _pending_verification_out(
+    account: Account,
+    *,
+    email_test_code: str | None = None,
+    phone_test_code: str | None = None,
+) -> PendingVerificationOut:
     return PendingVerificationOut(
         account_id=str(account.id),
         email=account.email,
@@ -109,6 +124,8 @@ def _pending_verification_out(account: Account) -> PendingVerificationOut:
         email_verified=account.email_verified_at is not None,
         phone_verified=account.phone_verified_at is not None,
         pending_verification_token=create_pending_verification_token(str(account.id)),
+        email_test_code=email_test_code,
+        phone_test_code=phone_test_code,
     )
 
 
@@ -165,10 +182,14 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)) -> Pending
         )
     db.refresh(account)
 
-    generate_and_send_code(db, account, "email", enforce_cooldown=False)
-    generate_and_send_code(db, account, "phone", enforce_cooldown=False)
+    email_code = generate_and_send_code(db, account, "email", enforce_cooldown=False)
+    phone_code = generate_and_send_code(db, account, "phone", enforce_cooldown=False)
 
-    return _pending_verification_out(account)
+    return _pending_verification_out(
+        account,
+        email_test_code=email_code if not settings.resend_api_key else None,
+        phone_test_code=phone_code if not settings.termii_api_key else None,
+    )
 
 
 @router.post("/verify/start", response_model=PendingVerificationOut)
@@ -187,12 +208,16 @@ def verify_start(payload: LoginRequest, db: Session = Depends(get_db)) -> Pendin
     if account is None or not verify_password(payload.password, account.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
+    email_test_code = None
+    phone_test_code = None
     if account.email_verified_at is None:
-        generate_and_send_code(db, account, "email", enforce_cooldown=False)
+        email_code = generate_and_send_code(db, account, "email", enforce_cooldown=False)
+        email_test_code = email_code if not settings.resend_api_key else None
     if account.phone_verified_at is None:
-        generate_and_send_code(db, account, "phone", enforce_cooldown=False)
+        phone_code = generate_and_send_code(db, account, "phone", enforce_cooldown=False)
+        phone_test_code = phone_code if not settings.termii_api_key else None
 
-    return _pending_verification_out(account)
+    return _pending_verification_out(account, email_test_code=email_test_code, phone_test_code=phone_test_code)
 
 
 @router.post("/verify", response_model=VerifyOut)
@@ -215,19 +240,22 @@ def verify(
     )
 
 
-@router.post("/verify/resend", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/verify/resend", response_model=ResendOut)
 def resend_code(
     payload: ResendRequest,
     account: Account = Depends(get_pending_verification_account),
     db: Session = Depends(get_db),
-) -> None:
+) -> ResendOut:
     try:
-        generate_and_send_code(db, account, payload.channel)
+        code = generate_and_send_code(db, account, payload.channel)
     except ResendTooSoonError as exc:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=f"Please wait {exc.retry_after_seconds}s before requesting another code",
         )
+
+    channel_key_set = settings.resend_api_key if payload.channel == "email" else settings.termii_api_key
+    return ResendOut(test_code=code if not channel_key_set else None)
 
 
 @router.post("/logout")

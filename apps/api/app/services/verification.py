@@ -57,7 +57,7 @@ def _generate_code() -> str:
     return f"{secrets.randbelow(1_000_000):06d}"
 
 
-def generate_and_send_code(db: Session, account: Account, channel: str, *, enforce_cooldown: bool = True) -> None:
+def generate_and_send_code(db: Session, account: Account, channel: str, *, enforce_cooldown: bool = True) -> str:
     r = get_redis()
     cooldown_key = _cooldown_key(account.id, channel)
 
@@ -95,6 +95,8 @@ def generate_and_send_code(db: Session, account: Account, channel: str, *, enfor
         get_email_sender().send(to=account.email, subject="Verify your NexShare account", body=message)
     else:
         get_sms_sender().send(to=account.phone, body=message)
+
+    return code
 
 
 def verify_code(db: Session, account: Account, channel: str, submitted_code: str) -> None:

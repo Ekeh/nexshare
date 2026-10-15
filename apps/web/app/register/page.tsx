@@ -50,6 +50,8 @@ function RegisterForm() {
               pendingToken={pending.pending_verification_token}
               email={pending.email}
               phone={pending.phone}
+              emailTestCode={pending.email_test_code}
+              phoneTestCode={pending.phone_test_code}
               onVerified={(account) => router.push(account.role === "promoter" ? "/dashboard" : "/business")}
             />
           </div>

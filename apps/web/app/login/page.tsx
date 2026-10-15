@@ -56,6 +56,8 @@ export default function LoginPage() {
               phone={pending.phone}
               emailVerified={pending.email_verified}
               phoneVerified={pending.phone_verified}
+              emailTestCode={pending.email_test_code}
+              phoneTestCode={pending.phone_test_code}
               onVerified={(account) => router.push(account.role === "business" ? "/business" : "/dashboard")}
             />
           </div>
