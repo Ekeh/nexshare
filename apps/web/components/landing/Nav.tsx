@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Logo } from "@/components/Logo";
+import { Logo, LogoMark } from "@/components/Logo";
 import { MenuIcon } from "@/components/icons";
 import { MobileNavDrawer } from "@/components/MobileNavDrawer";
 
@@ -21,7 +21,10 @@ export function Nav() {
   return (
     <header className="relative z-20">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 lg:px-10">
-        <Logo />
+        <LogoMark className="h-9 w-9 shrink-0 sm:hidden" />
+        <div className="hidden sm:block">
+          <Logo />
+        </div>
         <nav className="hidden items-center gap-8 lg:flex">
           {links.map((l) => (
             <Link
@@ -33,16 +36,16 @@ export function Nav() {
             </Link>
           ))}
         </nav>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Link
             href="/login"
-            className="hidden rounded-full border border-white/30 px-5 py-2 text-sm font-semibold text-white transition hover:scale-[1.02] hover:bg-white/10 active:scale-95 sm:block"
+            className="rounded-full border border-white/30 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:scale-[1.02] hover:bg-white/10 active:scale-95 sm:px-5 sm:py-2 sm:text-sm"
           >
             Login
           </Link>
           <Link
             href="/register"
-            className="rounded-full bg-cta-gradient px-5 py-2 text-sm font-bold text-navy-900 shadow-card transition hover:scale-[1.02] hover:brightness-105 active:scale-95"
+            className="rounded-full bg-cta-gradient px-3.5 py-1.5 text-xs font-bold text-navy-900 shadow-card transition hover:scale-[1.02] hover:brightness-105 active:scale-95 sm:px-5 sm:py-2 sm:text-sm"
           >
             Get Started
           </Link>
@@ -50,36 +53,13 @@ export function Nav() {
             type="button"
             onClick={() => setMobileOpen(true)}
             aria-label="Open menu"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/10 lg:hidden"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/10 sm:h-10 sm:w-10 lg:hidden"
           >
             <MenuIcon className="h-5 w-5" />
           </button>
         </div>
       </div>
-      <MobileNavDrawer
-        open={mobileOpen}
-        onClose={() => setMobileOpen(false)}
-        links={links}
-        hideFrom="lg"
-        footer={
-          <>
-            <Link
-              href="/login"
-              onClick={() => setMobileOpen(false)}
-              className="rounded-full border border-white/30 px-5 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-white/10"
-            >
-              Login
-            </Link>
-            <Link
-              href="/register"
-              onClick={() => setMobileOpen(false)}
-              className="rounded-full bg-cta-gradient px-5 py-2.5 text-center text-sm font-bold text-navy-900 shadow-card transition hover:brightness-105"
-            >
-              Get Started
-            </Link>
-          </>
-        }
-      />
+      <MobileNavDrawer open={mobileOpen} onClose={() => setMobileOpen(false)} links={links} hideFrom="lg" />
     </header>
   );
 }
